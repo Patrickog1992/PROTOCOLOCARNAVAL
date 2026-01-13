@@ -17,8 +17,8 @@ const steps = [
 // Static realistic images for instant loading
 // Updated to show defined bodies without gym equipment focus
 const GENDER_IMAGES = {
-  male: "https://bemestarfit.netlify.app/_next/image?url=https%3A%2F%2Fv3.certifiedfasting.com%2Fpt-pt%2Fg-22m-eur%2Fimg%2FGPITINsBsO-734.webp&w=640&q=75",
-  female: "https://bemestarfit.netlify.app/_next/image?url=https%3A%2F%2Fv3.certifiedfasting.com%2Fpt-pt%2Fg-22m-eur%2Fimg%2FOGiWGtJUtj-734.webp&w=640&q=75"
+  male: "https://i.imgur.com/2UhGfva.jpeg",
+  female: "https://i.imgur.com/jUrer0k.jpeg"
 };
 
 export const Quiz: React.FC<QuizProps> = ({ onComplete }) => {
