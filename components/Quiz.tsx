@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QuizState } from '../types';
 import { Button } from './Button';
-import { Check, AlertTriangle, ArrowRight, Star } from 'lucide-react';
+import { Check, AlertTriangle } from 'lucide-react';
+// Removed generateGenderImage import to speed up loading
 
 interface QuizProps {
   onComplete: (data: QuizState) => void;
@@ -13,6 +14,8 @@ const steps = [
   'height', 'socialProof1', 'injury', 'visualization', 'format', 'focusAreas', 'commitment'
 ];
 
+// Static realistic images for instant loading
+// Updated to show defined bodies without gym equipment focus
 const GENDER_IMAGES = {
   male: "https://bemestarfit.netlify.app/_next/image?url=https%3A%2F%2Fv3.certifiedfasting.com%2Fpt-pt%2Fg-22m-eur%2Fimg%2FGPITINsBsO-734.webp&w=640&q=75",
   female: "https://bemestarfit.netlify.app/_next/image?url=https%3A%2F%2Fv3.certifiedfasting.com%2Fpt-pt%2Fg-22m-eur%2Fimg%2FOGiWGtJUtj-734.webp&w=640&q=75"
@@ -25,6 +28,8 @@ export const Quiz: React.FC<QuizProps> = ({ onComplete }) => {
   });
   const [imcData, setImcData] = useState<{value: string, show: boolean}>({ value: '', show: false });
 
+  // Removed useEffect for image fetching to ensure instant render
+
   const handleAnswer = (key: keyof QuizState, value: any) => {
     setAnswers(prev => ({ ...prev, [key]: value }));
     nextStep();
@@ -32,13 +37,11 @@ export const Quiz: React.FC<QuizProps> = ({ onComplete }) => {
 
   const handleMultiSelect = (key: keyof QuizState, value: string) => {
     const currentList = (answers[key] as string[]) || [];
-    let newList;
     if (currentList.includes(value)) {
-      newList = currentList.filter(i => i !== value);
+      setAnswers(prev => ({ ...prev, [key]: currentList.filter(i => i !== value) }));
     } else {
-      newList = [...currentList, value];
+      setAnswers(prev => ({ ...prev, [key]: [...currentList, value] }));
     }
-    setAnswers(prev => ({ ...prev, [key]: newList }));
   };
 
   const handleInput = (key: keyof QuizState, value: string) => {
@@ -73,38 +76,21 @@ export const Quiz: React.FC<QuizProps> = ({ onComplete }) => {
   const currentStep = steps[currentStepIndex];
 
   // Render helpers
-  const renderOption = (label: string, icon?: React.ReactNode, description?: string) => {
+  const renderOption = (label: string, icon?: string, description?: string) => {
     return (
         <Button 
           variant="ghost" 
           fullWidth 
           onClick={() => handleAnswer(currentStep as keyof QuizState, label)}
-          className="mb-3 text-left justify-start h-auto py-5 border border-gray-100 hover:border-carnival-orange/30 group"
+          className="mb-3 text-left justify-start h-auto py-6"
         >
           <div className="flex flex-col items-start text-left w-full">
-            {icon && <span className="text-2xl mb-2 text-carnival-orange group-hover:scale-110 transition-transform">{icon}</span>}
-            <span className="text-lg font-semibold">{label}</span>
+            {icon && <span className="text-2xl mb-2">{icon}</span>}
+            <span className="text-lg">{label}</span>
             {description && <span className="text-sm font-light text-gray-500 mt-1">{description}</span>}
           </div>
         </Button>
       );
-  };
-
-  const renderMultiSelectOption = (label: string) => {
-    const isSelected = (answers.focusAreas || []).includes(label);
-    return (
-      <button
-        onClick={() => handleMultiSelect('focusAreas', label)}
-        className={`w-full p-4 mb-3 rounded-xl border-2 flex items-center justify-between transition-all ${
-          isSelected 
-            ? 'border-carnival-orange bg-orange-50 text-carnival-orange font-bold' 
-            : 'border-gray-100 bg-gray-50 text-gray-600'
-        }`}
-      >
-        <span>{label}</span>
-        {isSelected && <Check className="w-5 h-5" />}
-      </button>
-    );
   };
 
   return (
@@ -116,292 +102,255 @@ export const Quiz: React.FC<QuizProps> = ({ onComplete }) => {
             <img 
                 src="https://i.imgur.com/99UVGNP.jpeg" 
                 alt="Logo" 
-                className="w-[80px] h-[80px] object-contain rounded-full shadow-md"
+                className="w-[100px] h-[100px] object-contain rounded-full shadow-md"
             />
         </div>
       )}
 
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
+      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
         <div 
-          className="bg-carnival-orange h-2 rounded-full transition-all duration-300" 
+          className="bg-carnival-orange h-2.5 rounded-full transition-all duration-500" 
           style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
         ></div>
       </div>
 
-      {/* Steps */}
-      <div className="animate-fadeIn">
+      <div className="flex-1 flex flex-col justify-center">
         
+        {/* Step Content */}
         {currentStep === 'gender' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Qual é o seu gênero?</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">Selecione seu gênero para ajustarmos o metabolismo basal.</h2>
             <div className="grid grid-cols-2 gap-4">
-              <div 
+              <button 
                 onClick={() => handleAnswer('gender', 'HOMEM')}
-                className="cursor-pointer group"
+                className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-xl hover:border-carnival-orange transition-all bg-white shadow-sm"
               >
-                <div className="rounded-2xl overflow-hidden mb-3 border-4 border-transparent group-hover:border-carnival-orange transition-all relative aspect-[3/4]">
-                   <img src={GENDER_IMAGES.male} alt="Homem" className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-all"></div>
+                <div className="w-full aspect-[3/4] overflow-hidden rounded-lg mb-4">
+                  <img src={GENDER_IMAGES.male} alt="Homem" className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
                 </div>
-                <p className="text-center font-bold text-lg group-hover:text-carnival-orange">HOMEM</p>
-              </div>
-              <div 
+                <span className="font-bold text-lg">HOMEM</span>
+              </button>
+              <button 
                 onClick={() => handleAnswer('gender', 'MULHER')}
-                className="cursor-pointer group"
+                className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-xl hover:border-carnival-orange transition-all bg-white shadow-sm"
               >
-                <div className="rounded-2xl overflow-hidden mb-3 border-4 border-transparent group-hover:border-carnival-orange transition-all relative aspect-[3/4]">
-                   <img src={GENDER_IMAGES.female} alt="Mulher" className="w-full h-full object-cover" />
-                   <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-all"></div>
+                 <div className="w-full aspect-[3/4] overflow-hidden rounded-lg mb-4">
+                  <img src={GENDER_IMAGES.female} alt="Mulher" className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
                 </div>
-                <p className="text-center font-bold text-lg group-hover:text-carnival-orange">MULHER</p>
-              </div>
+                <span className="font-bold text-lg">MULHER</span>
+              </button>
             </div>
           </>
         )}
 
         {currentStep === 'age' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Qual é a sua idade?</h2>
-            {renderOption('18 - 29 anos')}
-            {renderOption('30 - 39 anos')}
-            {renderOption('40 - 49 anos')}
-            {renderOption('50+ anos')}
+            <h2 className="text-2xl font-bold mb-6">E qual sua faixa etária?</h2>
+            {renderOption("18-29 anos")}
+            {renderOption("30-40 anos")}
+            {renderOption("41-50 anos")}
+            {renderOption("+50 anos")}
           </>
         )}
 
         {currentStep === 'goal' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Qual é o seu principal objetivo até o Carnaval?</h2>
-            {renderOption('Secar e Definir', '🔥', 'Quero perder gordura e mostrar os músculos')}
-            {renderOption('Perder Peso Urgente', '⚖️', 'Preciso reduzir medidas o mais rápido possível')}
-            {renderOption('Ganhar Massa Magra', '💪', 'Quero ficar mais forte e com corpo torneado')}
-            {renderOption('Melhorar Condicionamento', '🏃', 'Quero ter mais fôlego e energia')}
+            <h2 className="text-2xl font-bold mb-2">Qual o seu principal objetivo ao iniciar este desafio?</h2>
+            <p className="text-gray-500 mb-6">Isso nos ajuda a definir o melhor protocolo de treino para alcançar seu principal objetivo</p>
+            {renderOption("Secar gordura do corpo")}
+            {renderOption("Construir mais músculos")}
+            {renderOption("Aumentar a disposição")}
+            {renderOption("Eliminar dores no corpo")}
           </>
         )}
 
         {currentStep === 'obstacle' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">O que mais te atrapalha hoje?</h2>
-            {renderOption('Falta de Tempo', '⏰')}
-            {renderOption('Preguiça / Falta de Ânimo', '😴')}
-            {renderOption('Ansiedade e Compulsão', '🍔')}
-            {renderOption('Metabolismo Lento', '🐢')}
-            {renderOption('Não sei por onde começar', '🤷')}
+            <h2 className="text-2xl font-bold mb-6">E o que mais te atrapalhou de conseguir isso até hoje?</h2>
+            {renderOption("A falta de tempo no dia a dia")}
+            {renderOption("A falta de motivação para continuar")}
+            {renderOption("A dúvida em não saber como começar do jeito certo")}
+            {renderOption("O desânimo de ter tentado antes sem ter resultados")}
           </>
         )}
 
         {currentStep === 'experience' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Qual sua experiência com treinos?</h2>
-            {renderOption('Sedentário(a)', '🛋️', 'Não treino há meses ou anos')}
-            {renderOption('Iniciante', '🚶', 'Treino de vez em quando, sem regularidade')}
-            {renderOption('Intermediário', '🏃', 'Treino de 2 a 3 vezes por semana')}
-            {renderOption('Avançado', '🏋️', 'Treino firme quase todos os dias')}
+            <h2 className="text-2xl font-bold mb-2">Qual seu nível de experiência com treinos?</h2>
+            <p className="text-gray-500 mb-6">Seja honesto(a), isso é crucial para montarmos treinos que funcionem para você sem risco de lesão.</p>
+            {renderOption("Começar agora")}
+            {renderOption("Iniciante")}
+            {renderOption("Intermediário")}
+            {renderOption("Avançado")}
           </>
         )}
 
         {currentStep === 'motivation' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">O que te motivou a começar agora?</h2>
-            {renderOption('Quero me sentir bem no biquíni/sunga', '👙')}
-            {renderOption('Saúde e disposição', '❤️')}
-            {renderOption('Autoestima e confiança', '✨')}
-            {renderOption('Um evento específico (Carnaval)', '🎉')}
+            <h2 className="text-2xl font-bold mb-6">O que mais te animaria em um Desafio para melhorar seu corpo até o carnaval?</h2>
+            {renderOption("Ver resultado rápido no meu corpo.", "😄")}
+            {renderOption("Ter um passo a passo simples que eu consiga seguir.", "😅")}
+            {renderOption("Poder treinar em casa sem precisar de equipamentos.", "😎")}
+            {renderOption("Ter um desafio que me faça seguir firme e animado.", "💪")}
           </>
         )}
 
         {currentStep === 'time' && (
           <>
-             <h2 className="text-2xl font-bold mb-6 text-center">Quanto tempo você tem por dia?</h2>
-             {renderOption('15-20 minutos', '⚡', 'Treinos expressos e intensos')}
-             {renderOption('30-45 minutos', '⏱️', 'O ideal para resultados consistentes')}
-             {renderOption('Mais de 1 hora', '🕰️', 'Tenho tempo de sobra')}
+            <h2 className="text-2xl font-bold mb-6">Quanto tempo por dia você consegue se dedicar ao seu treino?</h2>
+            {renderOption("15 minutos")}
+            {renderOption("20 minutos")}
+            {renderOption("30 minutos")}
+            {renderOption("1 hora")}
           </>
         )}
 
         {currentStep === 'environment' && (
           <>
-             <h2 className="text-2xl font-bold mb-6 text-center">Onde você prefere treinar?</h2>
-             {renderOption('Em Casa', '🏠', 'Conforto e praticidade')}
-             {renderOption('Na Academia', '🏋️', 'Gosto dos equipamentos')}
-             {renderOption('Ao Ar Livre', '🌳', 'Parques e praças')}
+            <h2 className="text-2xl font-bold mb-6">Em qual ambiente você prefere treinar?</h2>
+            {renderOption("Em casa", "🏠")}
+            {renderOption("Ao ar livre", "🏞️")}
+            {renderOption("Na academia", "🏋️")}
           </>
         )}
 
         {currentStep === 'frequency' && (
           <>
-             <h2 className="text-2xl font-bold mb-6 text-center">Quantas vezes na semana pode treinar?</h2>
-             {renderOption('1 a 2 vezes', '📅')}
-             {renderOption('3 a 4 vezes', '📅')}
-             {renderOption('5 vezes ou mais', '🔥')}
+            <h2 className="text-2xl font-bold mb-6">Quantos dias por semana você pode treinar?</h2>
+            {renderOption("2-3 dias")}
+            {renderOption("4-5 dias")}
+            {renderOption("6-7 dias")}
           </>
         )}
 
         {currentStep === 'weightGoal' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Quanto peso você quer perder?</h2>
-            {renderOption('2kg a 5kg', '💧')}
-            {renderOption('5kg a 10kg', '⚖️')}
-            {renderOption('Mais de 10kg', '🚀')}
-            {renderOption('Não quero perder peso, só definir', '💪')}
+            <h2 className="text-2xl font-bold mb-6">Você tem alguma meta de peso que deseja perder?</h2>
+            {renderOption("Perder até 5kg")}
+            {renderOption("Perder de 5-10kg")}
+            {renderOption("Perder de 10-15kg")}
+            {renderOption("Perder mais de 15kg")}
+            {renderOption("Construir mais músculos e aumentar a força")}
           </>
         )}
 
         {currentStep === 'currentWeight' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Qual seu peso atual (kg)?</h2>
-            <div className="relative">
-              <input 
-                type="number" 
-                placeholder="Ex: 70.5" 
-                className="w-full p-4 text-2xl text-center border-2 border-gray-200 rounded-xl focus:border-carnival-orange focus:outline-none"
-                onChange={(e) => setAnswers({...answers, currentWeight: e.target.value})}
-                autoFocus
-              />
-              <span className="absolute right-8 top-5 text-gray-400 font-bold">kg</span>
-            </div>
-            <Button 
-              className="mt-6" 
-              fullWidth 
-              onClick={() => answers.currentWeight && nextStep()}
-              disabled={!answers.currentWeight}
-            >
-              PRÓXIMO
-            </Button>
+            <h2 className="text-2xl font-bold mb-6">Digite seu peso atual</h2>
+            <input 
+              type="text" 
+              placeholder="Ex: 70kg" 
+              className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl mb-6 focus:border-carnival-orange focus:outline-none"
+              onChange={(e) => handleInput('currentWeight', e.target.value)}
+              value={answers.currentWeight || ''}
+            />
+            <Button fullWidth onClick={nextStep} disabled={!answers.currentWeight}>CONTINUAR</Button>
           </>
         )}
 
         {currentStep === 'height' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Qual sua altura?</h2>
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Ex: 1.65" 
-                className="w-full p-4 text-2xl text-center border-2 border-gray-200 rounded-xl focus:border-carnival-orange focus:outline-none"
-                onChange={(e) => handleInput('height', e.target.value)}
-                autoFocus
-              />
-              <span className="absolute right-8 top-5 text-gray-400 font-bold">m</span>
-            </div>
+            <h2 className="text-2xl font-bold mb-6">Informe sua altura</h2>
+            <input 
+              type="text" 
+              placeholder="Ex: 1.70m" 
+              className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl mb-6 focus:border-carnival-orange focus:outline-none"
+              onChange={(e) => handleInput('height', e.target.value)}
+              value={answers.height || ''}
+            />
             
             {imcData.show && (
-                <div className="mt-6 bg-blue-50 p-4 rounded-xl text-center">
-                    <p className="text-gray-600 mb-1">Seu IMC calculado:</p>
-                    <p className="text-3xl font-bold text-blue-600">{imcData.value}</p>
-                    <p className="text-xs text-gray-500 mt-2">Baseado no peso e altura informados.</p>
+                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r">
+                    <div className="flex items-center font-bold">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        <p>IMC: {imcData.value}</p>
+                    </div>
+                    <p className="text-sm font-semibold mt-1">ATENÇÃO: VOCÊ ESTÁ EM RISCO!</p>
                 </div>
             )}
 
-            <Button 
-              className="mt-6" 
-              fullWidth 
-              onClick={() => answers.height && nextStep()}
-              disabled={!answers.height}
-            >
-              PRÓXIMO
-            </Button>
+            <Button fullWidth onClick={nextStep} disabled={!answers.height}>CONTINUAR</Button>
           </>
         )}
 
         {currentStep === 'socialProof1' && (
-            <div className="text-center">
-                <div className="mb-6 flex justify-center">
-                    <div className="bg-yellow-100 p-4 rounded-full">
-                        <Star className="w-12 h-12 text-yellow-500 fill-yellow-500" />
-                    </div>
-                </div>
-                <h2 className="text-2xl font-bold mb-4">Ótimo! Já entendemos seu perfil.</h2>
-                <p className="text-gray-600 mb-8">
-                    Milhares de pessoas com o perfil parecido com o seu já conseguiram resultados incríveis nas primeiras 2 semanas.
-                </p>
-                <div className="bg-white border border-gray-100 shadow-xl rounded-xl p-6 mb-8 transform rotate-1">
-                    <div className="flex items-center mb-4">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 mr-3">M</div>
-                        <div>
-                            <p className="font-bold text-sm">Mariana Costa</p>
-                            <div className="flex text-yellow-400 text-xs">★★★★★</div>
-                        </div>
-                    </div>
-                    <p className="text-gray-600 text-sm italic">"Eu achava que não tinha tempo, mas o método encaixou certinho na minha rotina. Perdi 4kg em 15 dias!"</p>
-                </div>
-                <Button fullWidth onClick={nextStep}>
-                    VAMOS CONTINUAR <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+          <>
+            <h2 className="text-2xl font-bold mb-6 text-center">Veja algumas mulheres que fizeram o PROTOCOLO no ano passado</h2>
+            <div className="w-full rounded-xl overflow-hidden shadow-md mb-8 border border-gray-100 bg-gray-50">
+                <img 
+                    src="https://i.imgur.com/RzejM6W.jpeg" 
+                    alt="Resultados de alunas" 
+                    className="w-full h-auto object-cover"
+                />
             </div>
+            <Button fullWidth onClick={nextStep}>CONTINUAR</Button>
+          </>
         )}
 
         {currentStep === 'injury' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Você possui alguma lesão?</h2>
-            {renderOption('Não, sou 100% saudável', '✅')}
-            {renderOption('Sim, no Joelho', '🦵')}
-            {renderOption('Sim, na Coluna/Costas', '🦴')}
-            {renderOption('Sim, no Ombro', '💪')}
-            {renderOption('Outra lesão', '⚠️')}
+            <h2 className="text-2xl font-bold mb-6">Você tem alguma lesão ou limitação física?</h2>
+            {renderOption("Não tenho nenhuma")}
+            {renderOption("Dor nas costas")}
+            {renderOption("Dor nos ombros")}
+            {renderOption("Dor nos joelhos")}
           </>
         )}
 
         {currentStep === 'visualization' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Como você quer se sentir no Carnaval?</h2>
-            {renderOption('Confiante para usar qualquer roupa', '👗')}
-            {renderOption('Com energia para pular os 4 dias', '🔋')}
-            {renderOption('Orgulhosa(o) das minhas fotos', '📸')}
-            {renderOption('Sem inchaço e retenção', '💧')}
+            <h2 className="text-2xl font-bold mb-6">Como você se imagina após os Protocolo de CARNAVAL?</h2>
+            {renderOption("Me olhar no espelho e ficar feliz com o que vejo!", "😁")}
+            {renderOption("Ter energia para meus dias renderem mais!", "⚡")}
+            {renderOption("Dormir melhor sem sofrer com insônias e acordar cansado!", "😴")}
+            {renderOption("Aumentar minha força para tarefas físicas!", "💪")}
           </>
         )}
 
         {currentStep === 'format' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Prefere receber seu protocolo de treino personalizado por imagens ou textos?</h2>
-            {renderOption('Textos', '📝')}
-            {renderOption('Imagens', '🖼️')}
-            {renderOption('Vídeos', '🎥')}
-            {renderOption('TODOS', '📦')}
+            <h2 className="text-2xl font-bold mb-6">Prefere receber seu protocolo de treino personalizado por imagens ou textos?</h2>
+            {renderOption("Textos")}
+            {renderOption("Imagens")}
+            {renderOption("OS DOIS")}
           </>
         )}
 
         {currentStep === 'focusAreas' && (
           <>
-            <h2 className="text-2xl font-bold mb-6 text-center">Quais áreas você quer focar mais?</h2>
-            <p className="text-center text-gray-500 mb-6 text-sm">(Selecione quantas quiser)</p>
+            <h2 className="text-2xl font-bold mb-2">Quais áreas do corpo você quer destacar?</h2>
+            <p className="text-gray-500 mb-6">Selecione todas as regiões que você quer dar ênfase nos próximos dias.</p>
             
-            {renderMultiSelectOption('Barriga / Abdômen')}
-            {renderMultiSelectOption('Pernas / Coxas')}
-            {renderMultiSelectOption('Glúteos')}
-            {renderMultiSelectOption('Braços')}
-            {renderMultiSelectOption('Costas')}
-            {renderMultiSelectOption('Peitoral')}
-
-            <Button 
-              fullWidth 
-              className="mt-6"
-              onClick={nextStep}
-            >
-              PRÓXIMO
-            </Button>
+            <div className="space-y-3 mb-6">
+              {['Abdômen', 'Peitoral', 'Braços', 'Pernas', 'Costas & Postura', 'Corpo Todo'].map((area) => (
+                <button
+                  key={area}
+                  onClick={() => handleMultiSelect('focusAreas', area)}
+                  className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
+                    answers.focusAreas?.includes(area)
+                      ? 'border-carnival-orange bg-orange-50 text-carnival-orange'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="font-semibold">{area}</span>
+                  {answers.focusAreas?.includes(area) && <Check className="w-5 h-5" />}
+                </button>
+              ))}
+            </div>
+            
+            <Button fullWidth onClick={nextStep} disabled={!answers.focusAreas?.length}>CONTINUAR</Button>
           </>
         )}
 
         {currentStep === 'commitment' && (
-          <div className="text-center">
-             <AlertTriangle className="w-16 h-16 text-carnival-orange mx-auto mb-6" />
-             <h2 className="text-2xl font-bold mb-4">Última etapa!</h2>
-             <p className="text-gray-600 mb-8">
-               Seu plano está quase pronto. Mas precisamos saber: você está realmente comprometido(a) a seguir o protocolo pelos próximos 30 dias?
-             </p>
-             <Button fullWidth onClick={() => handleAnswer('commitment', 'yes')} className="mb-4 text-lg py-5 animate-pulse">
-               SIM, ESTOU COMPROMETIDO(A)!
-             </Button>
-             <button 
-               onClick={() => alert("Esse desafio é apenas para quem está decidido a mudar!")}
-               className="text-gray-400 text-sm underline"
-             >
-               Não, prefiro continuar como estou.
-             </button>
-          </div>
+          <>
+            <h2 className="text-2xl font-bold mb-6">Qual é o seu nível de comprometimento para mudar?</h2>
+            {renderOption("Muito Empolgado!\n\nQuero iniciar logo e alcançar os objetivos que desejo!", "😎")}
+            {renderOption("Empolgado!\n\nQuero iniciar para ver se gosto e consigo manter a rotina.", "😁")}
+            {renderOption("Em Dúvida!\n\nAinda não tenho certeza mas quero experimentar.", "🫣")}
+            {renderOption("Desanimado!\n\nVou me conformar pra sempre com o corpo que tenho.", "😣")}
+          </>
         )}
       </div>
     </div>
